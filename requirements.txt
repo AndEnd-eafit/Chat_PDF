@@ -6,3 +6,10 @@ faiss-cpu==1.7.4
 streamlit-extras
 openai==0.28
 tiktoken
+
+streamlit
+PyPDF2
+langchain
+openai
+faiss-cpu
+Pillow
