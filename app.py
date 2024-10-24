@@ -1,5 +1,4 @@
 import os
-#from dotenv import load_dotenv
 import streamlit as st
 from PIL import Image
 import PyPDF2
@@ -12,54 +11,71 @@ from langchain.llms import OpenAI
 from langchain.callbacks import get_openai_callback
 import platform
 
+# Inyectar CSS para cambiar las tipografías
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400&family=Lexend:wght@600&display=swap');
 
-#import pickle5 as pickle
-#from pathlib import Path
+    h1, h2, h3 {
+        font-family: 'Lexend', sans-serif;
+    }
 
+    p, div, label, span, input, textarea {
+        font-family: 'Inter', sans-serif;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# Título y subtítulo de la aplicación
 st.title('Generación Aumentada por Recuperación (RAG) 💬')
+
+# Mostrar imagen en la app
 image = Image.open('Chat_pdf.png')
-st.write("Versión de Python:", platform.python_version())
+
+# Mostrar la versión de Python
+st.write(f"<span>Versión de Python: {platform.python_version()}</span>", unsafe_allow_html=True)
 st.image(image, width=350)
+
+# Barra lateral con información
 with st.sidebar:
-   st.subheader("Este Agente, te ayudará a realizar algo de análisis sobre el PDF cargado")
-ke = st.text_input('Ingresa tu Clave')
-#os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
+   st.subheader("Este Agente te ayudará a realizar análisis sobre el PDF cargado")
+
+# Entrada para la clave de API de OpenAI
+ke = st.text_input('Ingresa tu Clave de API de OpenAI', type='password')
 os.environ['OPENAI_API_KEY'] = ke
 
-pdfFileObj = open('example.pdf', 'rb')
- 
-# creating a pdf reader object
-pdfReader = PyPDF2.PdfReader(pdfFileObj)
-
-
-    # upload file
+# Cargar archivo PDF
 pdf = st.file_uploader("Carga el archivo PDF", type="pdf")
 
-   # extract the text
+# Extraer y procesar el texto del PDF
 if pdf is not None:
-      from langchain.text_splitter import CharacterTextSplitter
-      pdf_reader = PdfReader(pdf)
-      text = ""
-      for page in pdf_reader.pages:
-         text += page.extract_text()
+    # Crear un lector de PDF
+    pdf_reader = PdfReader(pdf)
+    text = ""
+    for page in pdf_reader.pages:
+        text += page.extract_text()
 
-   # split into chunks
-      text_splitter = CharacterTextSplitter(separator="\n",chunk_size=500,chunk_overlap=20,length_function=len)
-      chunks = text_splitter.split_text(text)
+    # Dividir el texto en chunks (fragmentos)
+    text_splitter = CharacterTextSplitter(separator="\n", chunk_size=500, chunk_overlap=20, length_function=len)
+    chunks = text_splitter.split_text(text)
 
-# create embeddings
-      embeddings = OpenAIEmbeddings()
-      knowledge_base = FAISS.from_texts(chunks, embeddings)
+    # Crear embeddings a partir de los fragmentos del texto
+    embeddings = OpenAIEmbeddings()
+    knowledge_base = FAISS.from_texts(chunks, embeddings)
 
-# show user input
-      st.subheader("Escribe que quieres saber sobre el documento")
-      user_question = st.text_area(" ")
-      if user_question:
+    # Mostrar el campo de entrada para las preguntas
+    st.subheader("Escribe lo que quieres saber sobre el documento")
+    user_question = st.text_area(" ")
+
+    if user_question:
+        # Buscar en la base de conocimientos la pregunta del usuario
         docs = knowledge_base.similarity_search(user_question)
 
-        llm = OpenAI(model_name="gpt-4o-mini")
+        # Cargar el modelo de lenguaje y realizar la cadena de preguntas y respuestas
+        llm = OpenAI(model_name="gpt-4")
         chain = load_qa_chain(llm, chain_type="stuff")
+
+        # Mostrar la respuesta
         with get_openai_callback() as cb:
-          response = chain.run(input_documents=docs, question=user_question)
-          print(cb)
-        st.write(response)
+            response = chain.run(input_documents=docs, question=user_question)
+            st.write(response)
