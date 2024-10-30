@@ -30,7 +30,7 @@ st.markdown("""
 st.title('Generación Aumentada por Recuperación (RAG) 💬')
 
 # Mostrar imagen en la app
-image = Image.open('Chat_pdf.png')
+image = Image.open('Yoru - Reading PDF.png')
 
 # Mostrar la versión de Python
 st.write(f"<span>Versión de Python: {platform.python_version()}</span>", unsafe_allow_html=True)
